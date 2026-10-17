@@ -1,0 +1,4 @@
+# Asset tooling only — no image generation, no API keys.
+# pillow: every script; numpy: process/pack/qa frame math.
+pillow>=10
+numpy
