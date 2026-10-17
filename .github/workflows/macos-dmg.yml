@@ -1,0 +1,46 @@
+name: macOS DMG (universal)
+
+# Builds a universal (aarch64 + x86_64) unsigned macOS .dmg on a macOS
+# runner and uploads it as a workflow artifact — no release, no signing.
+# Trigger: manual from the Actions tab (workflow_dispatch) or a version tag.
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Setup Rust (both Mac targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build universal app + dmg
+        uses: tauri-apps/tauri-action@v0
+        with:
+          args: --target universal-apple-darwin --bundles dmg
+
+      - name: Upload .dmg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pikachu-macOS-universal-dmg
+          path: src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          if-no-files-found: error
